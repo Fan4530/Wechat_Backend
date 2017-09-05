@@ -6,5 +6,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="GOPATH &lt;Around&gt;" level="project" />
+    <orderEntry type="library" name="GOPATH &lt;Wechat+_Backend&gt;" level="project" />
   </component>
 </module>

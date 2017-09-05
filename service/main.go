@@ -11,6 +11,7 @@ import (
 	"context"
 	"cloud.google.com/go/bigtable"
 	"github.com/pborman/uuid"
+	"strings"
 )
 type Location struct {
 	Lat float64 `json:"lat"`
@@ -27,10 +28,6 @@ type Post struct {
 func main() {
 	// Create a client
 	fmt.Println("started-service")
-	fmt.Println("started-service")
-
-	fmt.Println("started-service")
-	fmt.Println("started-service")
 
 	client, err := elastic.NewClient(elastic.SetURL(ES_URL), elastic.SetSniff(false))
 	if err != nil {
@@ -43,7 +40,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	if !exists {
+	if !exists {//https://www.elastic.co/guide/en/elasticsearch/reference/5.5/query-dsl-geo-distance-query.html#query-dsl-geo-distance-query
 		// Create a new index.
 		mapping := `{
                     "mappings":{
@@ -81,7 +78,7 @@ func handlerPost(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 		return
 	}
-	// Create a client
+	// Elastic search: Create a client
 	es_client, err := elastic.NewClient(elastic.SetURL(ES_URL), elastic.SetSniff(false))
 	if err != nil {
 		panic(err)
@@ -90,7 +87,7 @@ func handlerPost(w http.ResponseWriter, r *http.Request) {
 
 	id := uuid.New()
 
-	// Save it to index
+	// Save it to index(ES)
 	_, err = es_client.Index().
 		Index(INDEX).
 		Type(TYPE).
@@ -104,7 +101,10 @@ func handlerPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Printf("Post is saved to Index: %s\n", p.Message)
+	//===================================================================================
 	ctx := context.Background()
+
+
 	// you must update project name here
 	bt_client, err := bigtable.NewClient(ctx, PROJECT_ID, BT_INSTANCE)
 	if err != nil {
@@ -148,7 +148,8 @@ func handlerSearch(w http.ResponseWriter, r *http.Request) {
 	lat, _ := strconv.ParseFloat(r.URL.Query().Get("lat"), 64)
 	lon, _ := strconv.ParseFloat(r.URL.Query().Get("lon"), 64)
 
-	// range is optional
+	// set your range
+	// range is optional, if you don't set your range, than the default is 200km
 	ran := DISTANCE
 	if val := r.URL.Query().Get("range"); val != "" {
 		ran = val + "km"
@@ -156,7 +157,7 @@ func handlerSearch(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("Search received: %f %f %s", lat, lon, ran)
 
-	// Create a client
+	// Elastic search: Create a client
 	client, err := elastic.NewClient(elastic.SetURL(ES_URL), elastic.SetSniff(false))
 	if err != nil {
 		panic(err)
@@ -168,6 +169,7 @@ func handlerSearch(w http.ResponseWriter, r *http.Request) {
 	q := elastic.NewGeoDistanceQuery("location")
 	q = q.Distance(ran).Lat(lat).Lon(lon)
 
+	// get index from the elastic search
 	// Some delay may range from seconds to minutes. So if you don't get enough results. Try it later.
 	searchResult, err := client.Search().
 		Index(INDEX).
@@ -184,25 +186,33 @@ func handlerSearch(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Query took %d milliseconds\n", searchResult.TookInMillis)
 	// TotalHits is another convenience function that works even when something goes wrong.
 	fmt.Printf("Found a total of %d post\n", searchResult.TotalHits())
-
+//==========================8/30==============================================================
 	// Each is a convenience function that iterates over hits in a search result.
 	// It makes sure you don't need to check for nil values in the response.
 	// However, it ignores errors in serialization.
+
+	// process the searchResult that get from elastic search
 	var typ Post
 	var ps []Post
 	for _, item := range searchResult.Each(reflect.TypeOf(typ)) {
 		p := item.(Post)
 		fmt.Printf("Post by %s: %s at lat %v and lon %v\n", p.User, p.Message, p.Location.Lat, p.Location.Lon)
-		// TODO(vincent): Perform filtering based on keywords such as web spam etc.
-		ps = append(ps, p)
-
+		// TODO(Fan Zhang): Perform filtering based on keywords such as web spam etc.
+		// example
+		// if p.Message contains "The ..." , return true
+		// Here, only not contain the context, the content will be showed to user
+		if strings.Contains(p.Message, "The place you must go") == false {
+			ps = append(ps, p);
+		}
+		//ps = append(ps, p)
 	}
+	// change the array to json
 	js, err := json.Marshal(ps)
 	if err != nil {
 		panic(err)
 		return
 	}
-
+	// write back
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
 }

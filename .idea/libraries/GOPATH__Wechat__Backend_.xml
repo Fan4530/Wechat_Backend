@@ -1,0 +1,26 @@
+<component name="libraryTable">
+  <library name="GOPATH &lt;Wechat+_Backend&gt;">
+    <CLASSES>
+      <root url="file://C:/go/lib/src/gopkg.in" />
+      <root url="file://C:/go/bin/src/github.com" />
+      <root url="file://C:/go/lib/src/github.com" />
+      <root url="file://C:/go/bin/src/cloud.google.com" />
+      <root url="file://C:/go/bin/src/gopkg.in" />
+      <root url="file://C:/go/bin/src/google.golang.org" />
+      <root url="file://C:/go/bin/src/golang.org" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://C:/go/lib/src/gopkg.in" />
+      <root url="file://C:/go/bin/src/github.com" />
+      <root url="file://C:/go/lib/src/github.com" />
+      <root url="file://C:/go/bin/src/cloud.google.com" />
+      <root url="file://C:/go/bin/src/gopkg.in" />
+      <root url="file://C:/go/bin/src/google.golang.org" />
+      <root url="file://C:/go/bin/src/golang.org" />
+    </SOURCES>
+    <excluded>
+      <root url="file://$PROJECT_DIR$" />
+    </excluded>
+  </library>
+</component>
